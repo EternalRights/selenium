@@ -21,11 +21,11 @@ using OpenQA.Selenium.BiDi.Log;
 
 namespace OpenQA.Selenium.BiDi.BrowsingContext;
 
-public sealed class BrowsingContextLogModule(BrowsingContext context, ILogModule logModule) : IBrowsingContextLogModule
+internal sealed class BrowsingContextLogModule(BrowsingContext context, ILogModule logModule) : IBrowsingContextLogModule
 {
     public Task<Subscription> OnEntryAddedAsync(Func<EntryAddedEventArgs, Task> handler, ContextSubscriptionOptions? options = null, CancellationToken cancellationToken = default)
     {
-        if (handler is null) throw new ArgumentNullException(nameof(handler));
+        ArgumentNullException.ThrowIfNull(handler);
 
         return logModule.OnEntryAddedAsync(
             e => HandleEntryAddedAsync(e, handler),
@@ -35,7 +35,7 @@ public sealed class BrowsingContextLogModule(BrowsingContext context, ILogModule
 
     public Task<Subscription> OnEntryAddedAsync(Action<EntryAddedEventArgs> handler, ContextSubscriptionOptions? options = null, CancellationToken cancellationToken = default)
     {
-        if (handler is null) throw new ArgumentNullException(nameof(handler));
+        ArgumentNullException.ThrowIfNull(handler);
 
         return logModule.OnEntryAddedAsync(
             e => HandleEntryAdded(e, handler),

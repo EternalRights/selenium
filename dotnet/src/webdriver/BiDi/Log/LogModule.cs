@@ -18,30 +18,32 @@
 // </copyright>
 
 using System.Text.Json.Serialization;
+using static OpenQA.Selenium.BiDi.Log.LogJsonSerializerContext;
 
 namespace OpenQA.Selenium.BiDi.Log;
 
-public sealed class LogModule : Module, ILogModule
+internal sealed class LogModule : Module, ILogModule
 {
-    private static readonly LogJsonSerializerContext JsonContext = LogJsonSerializerContext.Default;
+    private static readonly Event<EntryAddedEventArgs, LogEntry> EntryAddedEvent = new(
+        "log.entryAdded",
+        static (bidi, p) => p switch
+        {
+            ConsoleLogEntry c => new ConsoleEntryAddedEventArgs(bidi, c.Level, c.Source, c.Text, c.Timestamp, c.Method, c.Args) { StackTrace = c.StackTrace },
+            JavascriptLogEntry j => new JavascriptEntryAddedEventArgs(bidi, j.Level, j.Source, j.Text, j.Timestamp) { StackTrace = j.StackTrace },
+            GenericLogEntry g => new GenericEntryAddedEventArgs(bidi, g.Type, g.Level, g.Source, g.Text, g.Timestamp) { StackTrace = g.StackTrace },
+            _ => throw new BiDiException($"Unknown {nameof(LogEntry)} type: {p.GetType()}")
+        },
+        Default.LogEntry);
 
     public async Task<Subscription> OnEntryAddedAsync(Func<EntryAddedEventArgs, Task> handler, SubscriptionOptions? options = null, CancellationToken cancellationToken = default)
     {
-        return await SubscribeAsync("log.entryAdded", handler, CreateEntryAddedEventArgs, options, JsonContext.LogEntry, cancellationToken).ConfigureAwait(false);
+        return await SubscribeAsync(EntryAddedEvent, handler, options, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<Subscription> OnEntryAddedAsync(Action<EntryAddedEventArgs> handler, SubscriptionOptions? options = null, CancellationToken cancellationToken = default)
     {
-        return await SubscribeAsync("log.entryAdded", handler, CreateEntryAddedEventArgs, options, JsonContext.LogEntry, cancellationToken).ConfigureAwait(false);
+        return await SubscribeAsync(EntryAddedEvent, handler, options, cancellationToken).ConfigureAwait(false);
     }
-
-    private static EntryAddedEventArgs CreateEntryAddedEventArgs(IBiDi bidi, LogEntry p) => p switch
-    {
-        ConsoleLogEntry c => new ConsoleEntryAddedEventArgs(bidi, c.Level, c.Source, c.Text, c.Timestamp, c.Method, c.Args) { StackTrace = c.StackTrace },
-        JavascriptLogEntry j => new JavascriptEntryAddedEventArgs(bidi, j.Level, j.Source, j.Text, j.Timestamp) { StackTrace = j.StackTrace },
-        GenericLogEntry g => new GenericEntryAddedEventArgs(bidi, g.Type, g.Level, g.Source, g.Text, g.Timestamp) { StackTrace = g.StackTrace },
-        _ => throw new BiDiException($"Unknown {nameof(LogEntry)} type: {p.GetType()}")
-    };
 }
 
 #region https://github.com/dotnet/runtime/issues/72604 Script.RemoteValue type dependency

@@ -17,31 +17,29 @@
 // under the License.
 // </copyright>
 
-using System.Text.Json.Serialization.Metadata;
-
 namespace OpenQA.Selenium.BiDi;
 
 public abstract class Module
 {
     private Broker Broker { get; set; } = null!;
 
-    protected Task<TResult> ExecuteCommandAsync<TCommand, TResult>(TCommand command, CommandOptions? options, JsonTypeInfo<TCommand> jsonCommandTypeInfo, JsonTypeInfo<TResult> jsonResultTypeInfo, CancellationToken cancellationToken)
-        where TCommand : Command
+    protected Task<TResult> ExecuteAsync<TParameters, TResult>(Command<TParameters, TResult> descriptor, TParameters @params, CommandOptions? options, CancellationToken cancellationToken)
+        where TParameters : Parameters
         where TResult : EmptyResult
     {
-        return Broker.ExecuteCommandAsync(command, options, jsonCommandTypeInfo, jsonResultTypeInfo, cancellationToken);
+        return Broker.ExecuteAsync(descriptor, @params, options, cancellationToken);
     }
 
-    protected Task<Subscription> SubscribeAsync<TEventArgs, TEventParams>(string name, Action<TEventArgs> action, Func<IBiDi, TEventParams, TEventArgs> factory, SubscriptionOptions? options, JsonTypeInfo<TEventParams> jsonTypeInfo, CancellationToken cancellationToken)
+    protected Task<Subscription> SubscribeAsync<TEventArgs, TEventParams>(Event<TEventArgs, TEventParams> descriptor, Action<TEventArgs> action, SubscriptionOptions? options, CancellationToken cancellationToken)
         where TEventArgs : EventArgs
     {
-        return Broker.SubscribeAsync(name, action, factory, options, jsonTypeInfo, cancellationToken);
+        return Broker.SubscribeAsync(descriptor, action, options, cancellationToken);
     }
 
-    protected Task<Subscription> SubscribeAsync<TEventArgs, TEventParams>(string name, Func<TEventArgs, Task> func, Func<IBiDi, TEventParams, TEventArgs> factory, SubscriptionOptions? options, JsonTypeInfo<TEventParams> jsonTypeInfo, CancellationToken cancellationToken)
+    protected Task<Subscription> SubscribeAsync<TEventArgs, TEventParams>(Event<TEventArgs, TEventParams> descriptor, Func<TEventArgs, Task> func, SubscriptionOptions? options, CancellationToken cancellationToken)
         where TEventArgs : EventArgs
     {
-        return Broker.SubscribeAsync(name, func, factory, options, jsonTypeInfo, cancellationToken);
+        return Broker.SubscribeAsync(descriptor, func, options, cancellationToken);
     }
 
     internal static TModule Create<TModule>(IBiDi bidi, Broker broker)

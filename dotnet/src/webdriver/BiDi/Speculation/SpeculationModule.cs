@@ -18,25 +18,26 @@
 // </copyright>
 
 using System.Text.Json.Serialization;
+using static OpenQA.Selenium.BiDi.Speculation.SpeculationJsonSerializerContext;
 
 namespace OpenQA.Selenium.BiDi.Speculation;
 
-public sealed class SpeculationModule : Module, ISpeculationModule
+internal sealed class SpeculationModule : Module, ISpeculationModule
 {
-    private static readonly SpeculationJsonSerializerContext JsonContext = SpeculationJsonSerializerContext.Default;
+    private static readonly Event<PrefetchStatusUpdatedEventArgs, PrefetchStatusUpdatedParameters> PrefetchStatusUpdatedEvent = new(
+        "speculation.prefetchStatusUpdated",
+        static (bidi, p) => new PrefetchStatusUpdatedEventArgs(bidi, p.Context, p.Url, p.Status),
+        Default.PrefetchStatusUpdatedParameters);
 
     public async Task<Subscription> OnPrefetchStatusUpdatedAsync(Func<PrefetchStatusUpdatedEventArgs, Task> handler, SubscriptionOptions? options = null, CancellationToken cancellationToken = default)
     {
-        return await SubscribeAsync("speculation.prefetchStatusUpdated", handler, CreatePrefetchStatusUpdatedEventArgs, options, JsonContext.PrefetchStatusUpdatedParameters, cancellationToken).ConfigureAwait(false);
+        return await SubscribeAsync(PrefetchStatusUpdatedEvent, handler, options, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<Subscription> OnPrefetchStatusUpdatedAsync(Action<PrefetchStatusUpdatedEventArgs> handler, SubscriptionOptions? options = null, CancellationToken cancellationToken = default)
     {
-        return await SubscribeAsync("speculation.prefetchStatusUpdated", handler, CreatePrefetchStatusUpdatedEventArgs, options, JsonContext.PrefetchStatusUpdatedParameters, cancellationToken).ConfigureAwait(false);
+        return await SubscribeAsync(PrefetchStatusUpdatedEvent, handler, options, cancellationToken).ConfigureAwait(false);
     }
-
-    private static PrefetchStatusUpdatedEventArgs CreatePrefetchStatusUpdatedEventArgs(IBiDi bidi, PrefetchStatusUpdatedParameters p)
-    => new(bidi, p.Context, p.Url, p.Status);
 }
 
 [JsonSerializable(typeof(PrefetchStatusUpdatedParameters))]

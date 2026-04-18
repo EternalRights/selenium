@@ -21,7 +21,7 @@ using OpenQA.Selenium.BiDi.Input;
 
 namespace OpenQA.Selenium.BiDi.BrowsingContext;
 
-public sealed class BrowsingContextInputModule(BrowsingContext context, IInputModule inputModule) : IBrowsingContextInputModule
+internal sealed class BrowsingContextInputModule(BrowsingContext context, IInputModule inputModule) : IBrowsingContextInputModule
 {
     public Task<PerformActionsResult> PerformActionsAsync(IEnumerable<SourceActions> actions, PerformActionsOptions? options = null, CancellationToken cancellationToken = default)
     {
@@ -40,7 +40,7 @@ public sealed class BrowsingContextInputModule(BrowsingContext context, IInputMo
 
     public Task<Subscription> OnFileDialogOpenedAsync(Func<FileDialogOpenedEventArgs, Task> handler, ContextSubscriptionOptions? options = null, CancellationToken cancellationToken = default)
     {
-        if (handler is null) throw new ArgumentNullException(nameof(handler));
+        ArgumentNullException.ThrowIfNull(handler);
 
         return inputModule.OnFileDialogOpenedAsync(
             e => HandleFileDialogOpenedAsync(e, handler),
@@ -50,7 +50,7 @@ public sealed class BrowsingContextInputModule(BrowsingContext context, IInputMo
 
     public Task<Subscription> OnFileDialogOpenedAsync(Action<FileDialogOpenedEventArgs> handler, ContextSubscriptionOptions? options = null, CancellationToken cancellationToken = default)
     {
-        if (handler is null) throw new ArgumentNullException(nameof(handler));
+        ArgumentNullException.ThrowIfNull(handler);
 
         return inputModule.OnFileDialogOpenedAsync(
             e => HandleFileDialogOpened(e, handler),
