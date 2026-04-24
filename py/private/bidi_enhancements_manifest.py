@@ -1727,7 +1727,7 @@ class PointerDownAction:
             params["userContext"] = user_context
 
         cmd = command_builder("permissions.setPermission", params)
-        return self._conn.execute(cmd)''',
+        self._conn.execute(cmd)''',
         ],
     },
 }
